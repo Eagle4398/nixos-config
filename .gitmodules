@@ -1,0 +1,4 @@
+[submodule "dotfiles"]
+	path = dotfiles
+	url = https://github.com/Eagle4398/dotfiles.git
+    branch = main
