@@ -5,7 +5,7 @@ sea-greeter = pkgs.callPackage (
   pkgs.fetchFromGitHub {
     owner = "Eagle4398";
     repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
-    rev = "a5a681245437b0cfd7c05f73e11841848b56acd1";
+    rev = "033d457b35fa9110507f1e55d3b02d8c2894fd2a";
     sha256 = "sha256-Oo1SULnOxkyQK8VPW0yrrwKLBS0RSDAbwYuOgliXcAM="; # Replace with the actual hash
   } + /sea-greeter-litarvan.nix
 ) { };
