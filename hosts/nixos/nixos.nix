@@ -1,6 +1,46 @@
 # laptop.nix
 { config, lib, pkgs, username, hostname, ... }:
 let
+  nature-backgrounds = pkgs.stdenvNoCC.mkDerivation {
+    name = "nature-images";
+    src = pkgs.fetchurl {
+      url =
+        "https://www.dropbox.com/scl/fi/t6gnddx3lgrov56nj30de/nature-images.zip?rlkey=0t2jo103z63udj6emaiewgsth&st=y3poqskl&dl=1";
+      sha256 = "sha256-XF3pPcVRE84wnesxO8aDFpsL81NK2YBWfnDr6ge2+SY=";
+    };
+    nativeBuildInputs = [ pkgs.unzip ];
+    dontUnpack = true;
+    buildPhase = ''
+      unzip $src
+    '';
+    installPhase = ''
+      mkdir -p $out
+      cp -r * $out/
+    '';
+  };
+  litarvan-theme = pkgs.callPackage
+    (pkgs.fetchFromGitHub
+      {
+        owner = "Eagle4398";
+        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
+        rev = "5ffcbd3a595c82fcef87f02a4ed9509fe62b8db8";
+        sha256 = "sha256-W20hbwRqaoRAEHpmFgyL9Q+Wf8neMOQPkWeq/k72mhg=";
+      } + /litarvan-theme.nix)
+    { };
+  sea-greeter = pkgs.callPackage
+    (pkgs.fetchFromGitHub
+      {
+        owner = "Eagle4398";
+        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
+        rev = "ce435d6a3103c269275b7f0e2754dd94c2d3378b";
+        sha256 = "sha256-2JKyHtkz7VMw7WYVdOO91z9QNzi0iVowF7fsuzFlqDc=";
+      } + /sea-greeter.nix)
+    {
+      theme = litarvan-theme;
+      backgrounds = nature-backgrounds;
+      enableHWAcceleration = true;
+    };
+
   # username = import ../../username.nix;
   certPath = "/etc/nixos/T-TeleSec_GlobalRoot_Class_2.pem";
   cert = pkgs.fetchurl {
@@ -49,6 +89,12 @@ in
   security.pki.certificateFiles = [
     cert
   ];
+
+  services.xserver.displayManager.lightdm = {
+    enable = true;
+    greeter.name = "sea-greeter";
+    greeter.package = sea-greeter;
+  };
 
   systemd.user.services.powersave-user = {
     description = "Perform user-level power state actions";

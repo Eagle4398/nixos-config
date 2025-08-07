@@ -2,8 +2,57 @@
 
 let
   username = import ./username.nix;
+  nature-backgrounds = pkgs.stdenvNoCC.mkDerivation {
+    name = "nature-images";
+    src = pkgs.fetchurl {
+      url =
+        "https://www.dropbox.com/scl/fi/t6gnddx3lgrov56nj30de/nature-images.zip?rlkey=0t2jo103z63udj6emaiewgsth&st=y3poqskl&dl=1";
+      sha256 = "sha256-XF3pPcVRE84wnesxO8aDFpsL81NK2YBWfnDr6ge2+SY=";
+    };
+    nativeBuildInputs = [ pkgs.unzip ];
+    dontUnpack = true;
+    buildPhase = ''
+      unzip $src
+    '';
+    installPhase = ''
+      mkdir -p $out
+      cp -r * $out/
+    '';
+  };
+  litarvan-theme = pkgs.callPackage
+    (pkgs.fetchFromGitHub
+      {
+        owner = "Eagle4398";
+        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
+        rev = "6b4c0b0e96d39d02a689b35af986194933e4459d";
+        sha256 = "sha256-y8PsEKDQeF+jAKFPZGdzrrzoUJXqonYQA7RV5CYKD8w=";
+      } + /litarvan-theme.nix)
+    { };
+  sea-greeter = pkgs.callPackage
+    (pkgs.fetchFromGitHub
+      {
+        owner = "Eagle4398";
+        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
+        rev = "ce435d6a3103c269275b7f0e2754dd94c2d3378b";
+        sha256 = "sha256-2JKyHtkz7VMw7WYVdOO91z9QNzi0iVowF7fsuzFlqDc=";
+      } + /sea-greeter.nix)
+    {
+      theme = litarvan-theme;
+      backgrounds = nature-backgrounds;
+    };
+  # sea-greeter = pkgs.callPackage /home/gloo/projects/nixOS/sea-greeter-lightdm-webkit-theme-litarvan-nixpkg/sea-greeter.nix
+  #   {
+  #     theme = litarvan-theme;
+  #     backgrounds = nature-backgrounds;
+  #   };
 in
 {
+
+  services.xserver.displayManager.lightdm = {
+    enable = true;
+    greeter.name = "sea-greeter";
+    greeter.package = sea-greeter;
+  };
 
   # imports =
   #   [
@@ -27,21 +76,19 @@ in
   '';
   boot.loader.grub.default = "saved";
 
-
-  boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
+  boot.initrd.availableKernelModules =
+    [ "nvme" "xhci_pci" "ahci" "usbhid" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
   boot.kernelModules = [ "kvm-amd" ];
   boot.extraModulePackages = [ ];
   boot.loader.grub.splashImage = null;
-  boot.loader.grub.gfxmodeBios = "1280x720"; 
-  boot.loader.grub.gfxmodeEfi = "1280x720"; 
+  boot.loader.grub.gfxmodeBios = "1280x720";
+  boot.loader.grub.gfxmodeEfi = "1280x720";
   boot.loader.grub.gfxpayloadBios = "keep";
 
-  networking.hostName = "NixTower"; 
+  networking.hostName = "NixTower";
 
-  hardware.graphics = {
-    enable = true;
-  };
+  hardware.graphics = { enable = true; };
 
   services.xserver.videoDrivers = [ "nvidia" ];
 
