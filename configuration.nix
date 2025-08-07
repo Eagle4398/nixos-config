@@ -1,24 +1,46 @@
-
 { config, lib, pkgs, username, unstablePkgs, ... }:
 let
-sea-greeter = pkgs.callPackage (
-  pkgs.fetchFromGitHub {
+  nature-backgrounds = pkgs.stdenvNoCC.mkDerivation {
+    name = "nature-images";
+    src = pkgs.fetchurl {
+      url =
+        "https://www.dropbox.com/scl/fi/t6gnddx3lgrov56nj30de/nature-images.zip?rlkey=0t2jo103z63udj6emaiewgsth&st=y3poqskl&dl=1";
+      sha256 = "sha256-XF3pPcVRE84wnesxO8aDFpsL81NK2YBWfnDr6ge2+SY=";
+    };
+    nativeBuildInputs = [ pkgs.unzip ];
+    dontUnpack = true;
+    buildPhase = ''
+      unzip $src
+    '';
+    installPhase = ''
+      mkdir -p $out
+      cp -r * $out/
+    '';
+  };
+  litarvan-theme = pkgs.callPackage (pkgs.fetchFromGitHub {
     owner = "Eagle4398";
     repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
-    rev = "033d457b35fa9110507f1e55d3b02d8c2894fd2a";
-    sha256 = "sha256-Oo1SULnOxkyQK8VPW0yrrwKLBS0RSDAbwYuOgliXcAM="; # Replace with the actual hash
-  } + /sea-greeter-litarvan.nix
-) { };
-in
-{
-  imports =
-    [
-      # # Used to keep it at system level, but don't want impure flakes 
-      # /etc/nixos/hardware-configuration.nix
+    rev = "5ffcbd3a595c82fcef87f02a4ed9509fe62b8db8";
+    sha256 = "sha256-W20hbwRqaoRAEHpmFgyL9Q+Wf8neMOQPkWeq/k72mhg=";
+  } + /litarvan-theme.nix) { };
+  sea-greeter = pkgs.callPackage (pkgs.fetchFromGitHub {
+    owner = "Eagle4398";
+    repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
+    rev = "5ffcbd3a595c82fcef87f02a4ed9509fe62b8db8";
+    sha256 = "sha256-W20hbwRqaoRAEHpmFgyL9Q+Wf8neMOQPkWeq/k72mhg=";
+  } + /sea-greeter.nix) {
+    theme = litarvan-theme;
+    backgrounds = nature-backgrounds;
+  };
 
-      # # necessary without flake import
-      # (import "${home-manager}/nixos")
-    ];
+in {
+  imports = [
+    # # Used to keep it at system level, but don't want impure flakes 
+    # /etc/nixos/hardware-configuration.nix
+
+    # # necessary without flake import
+    # (import "${home-manager}/nixos")
+  ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes " ];
 
@@ -88,14 +110,13 @@ in
     ];
   };
   programs.xss-lock = { enable = true; };
-  services.xserver.xkb =
-    {
-      layout = "us,de";
-      variant = "dvorak,";
-      # Composes produces euro with (comp)e= 
-      options = "caps:escape,compose:ralt,grp:win_space_toggle";
+  services.xserver.xkb = {
+    layout = "us,de";
+    variant = "dvorak,";
+    # Composes produces euro with (comp)e= 
+    options = "caps:escape,compose:ralt,grp:win_space_toggle";
 
-    };
+  };
   services.xserver.xautolock.time = 20;
   # I don't actually know if this is necessary for i3 
   programs.dconf.enable = true;
@@ -179,6 +200,8 @@ in
   environment.pathsToLink = [ "/libexec" ];
   # packages
   environment.systemPackages = with pkgs; [
+    xorg.xhost
+    qimgv
     # litarvan-theme
     unstablePkgs.texliveFull
     ryzenadj
