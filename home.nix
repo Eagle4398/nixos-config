@@ -1,13 +1,6 @@
 # home.nix
 { config, pkgs, lib, unstablePkgs, username, hostname, ... }:
-let
-  # # Imported now
-  # username = import ./username.nix;
-  # # Imported now
-  # unstable = import (builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/nixos-unstable.tar.gz") {
-  #   config = { allowUnfree = true; };
-  # };
-in {
+{
   imports = [ ./home-config.nix ];
   _module.args = {
     username = username;

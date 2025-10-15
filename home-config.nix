@@ -75,11 +75,11 @@ let
 primaryPath = ./hosts/${hostname}/home-${hostname}.nix;
 in
 {
-  imports = []
-  ++(if builtins.pathExists primaryPath then
-      [ primaryPath ]
-        else
-      [ ]);
+  # imports = []
+  # ++(if builtins.pathExists primaryPath then
+  #     [ primaryPath ]
+  #       else
+  #     [ ]);
   home.username = username;
   home.homeDirectory = "/home/${username}";
 
@@ -109,14 +109,6 @@ in
       fi
     '';
   };
-
-  # Why did I do this and not just ignore the lazy-lock? Idk.
-  # home.activation = {
-  #   linkLazyLock = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-  #     rm -f ~/.config/nvim/lazy-lock.json
-  #     ln -sf ${toString ./dotfiles}/.config/nvim/lazy-lock.json ~/.config/nvim/lazy-lock.json
-  #   '';
-  # };
 
   home.file = {
     ".config/alacritty/alacritty-host.toml" = {
@@ -159,8 +151,8 @@ in
   };
 
   xdg.userDirs = {
-    enable = true; # Let Home Manager manage standard user dirs
-    createDirectories = true; # Ensure ~/.config, ~/.local/share etc. are created if missing
+    enable = true; 
+    createDirectories = true; 
   };
 
 }
