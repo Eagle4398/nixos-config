@@ -72,7 +72,7 @@ let
 
   scriptspath = ../../dotfiles/.local/bin/scripts;
   # powersave = localHashedScript "${scriptspath}/powersave" "sha256-A8YU4YAIKG6JvqXBgKkzj69FYUnddNdbBuDVnToN2CE=";
-  powersaveroot = localHashedScript "${scriptspath}/powersaveroot" "sha256-LScFNNK0lskCB6UOp+sFCuPgoZNfpPQgy8+qog7gUew=";
+  powersaveroot = localHashedScript "${scriptspath}/powersaveroot" "sha256-ijGi+/HsD0EBflOHHUGejUV8cUGBAFYlZAlHiPp6psg=";
   setEppHint = localHashedScript "${scriptspath}/set_epp_hint" "sha256-gw5VQ42fA9vJyqoWao6XRjrurO2wQldTgBly9Ws4CwI=";
   changehz = localScript "${scriptspath}/changehz";
   powersaveuser = localScript "${scriptspath}/powersaveuser";
