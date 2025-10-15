@@ -7,7 +7,6 @@ let
     xorg.xhost
     qimgv
     # litarvan-theme
-    unstablePkgs.texliveFull
     ryzenadj
     # dolphin mtp
     libmtp

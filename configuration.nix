@@ -2,6 +2,7 @@
 let
  userPackages = import ./userPackages.nix { inherit pkgs unstablePkgs; };
  envPackages = import ./envPackages.nix { inherit pkgs unstablePkgs; };
+ bigPackages = import ./bigPackages.nix { inherit pkgs unstablePkgs; };
 in {
   imports = [
     # # Used to keep it at system level, but don't want impure flakes 
@@ -121,42 +122,7 @@ in {
   users.users.${username} = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" "audio" ];
-    packages =  userPackages;
-   # packages = with pkgs; [
-    #   octaveFull
-    #   udiskie
-    #   bemoji
-    #   rofimoji
-    #   emojipick
-    #   smile
-    #   unstablePkgs.google-chrome
-    #   unstablePkgs.chromedriver
-    #   anki-bin
-    #   tree
-    #   i3
-    #   alacritty
-    #   jetbrains-toolbox
-    #   vscode
-    #   unstablePkgs.signal-desktop
-    #   # discord
-    #   tmux
-    #   xdotool
-    #   qutebrowser
-    #   unstablePkgs.typst
-    #   flameshot
-    #   zathura
-    #   lxqt.pavucontrol-qt
-    #   alsa-utils
-    #   zotero
-    #   arandr
-    #   autorandr
-    #   # unstable.brave # loaded through home-manager for extensions
-    #   jetbrains-toolbox
-    #   kdePackages.dolphin
-    #   pinta
-    #   unstablePkgs.obsidian
-    #   cachix
-    # ];
+    packages =  userPackages ++ bigPackages;
   };
 
   # why not
@@ -172,57 +138,6 @@ in {
   environment.pathsToLink = [ "/libexec" ];
   # packages
   environment.systemPackages = envPackages;
-  # environment.systemPackages = with pkgs; [
-  #   gparted
-  #   unstablePkgs.yt-dlp
-  #   qdirstat
-  #   xorg.xhost
-  #   qimgv
-  #   # litarvan-theme
-  #   unstablePkgs.texliveFull
-  #   ryzenadj
-  #   # dolphin mtp
-  #   libmtp
-  #   kdePackages.kio-extras
-  #   # dolphin icon support
-  #   kdePackages.gwenview
-  #   kdePackages.qtsvg
-  #   kdePackages.ark
-  #   libsForQt5.breeze-icons
-  #   numlockx
-  #   kbd
-  #   #
-  #   clang
-  #   nodejs
-  #   shfmt
-  #   unstablePkgs.neovim
-  #   vim
-  #   wget
-  #   git
-  #   curl
-  #   zip
-  #   unzip
-  #   xclip
-  #   spice
-  #   spice-vdagent
-  #   jq
-  #   openssh
-  #   unstablePkgs.bitwarden
-  #   fzf
-  #   uv
-  #   python3
-  #   gcc
-  #   findutils
-  #   pciutils
-  #   openssl
-  #   rustc
-  #   file
-  #   cargo
-  #   gnumake
-  #   acpi
-  #   ripgrep
-  #   brightnessctl
-  # ];
 
   # this is literally just for JetBrains shortcuts to work.
   # the launch scripts requires all of the dependencies in accessible in lib

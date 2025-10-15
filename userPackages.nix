@@ -1,7 +1,6 @@
 { pkgs, unstablePkgs }:
 let
   packages = with pkgs; [
-    octaveFull
     udiskie
     bemoji
     rofimoji
