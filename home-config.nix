@@ -104,7 +104,10 @@ in {
     ".screenlayout" = {
       source = config.lib.file.mkOutOfStoreSymlink ./dotfiles/.screenlayout;
     };
-    ".config/tmux-sessionizer/dotfiles" = {
+    ".config/nixconfig" = {
+      source = config.lib.file.mkOutOfStoreSymlink ./dotfiles/..;
+    };
+    ".config/dotfiles" = {
       source = config.lib.file.mkOutOfStoreSymlink ./dotfiles;
     };
     #  ".config/home-manager/home.nix" = {
