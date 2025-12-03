@@ -198,8 +198,6 @@ in
     };
   };
 
-  # TODO
-  # https://github.com/NixOS/nixos-hardware/tree/master/lenovo/ideapad/15ach6
   services.libinput.enable = true;
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = false;

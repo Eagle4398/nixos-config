@@ -1,7 +1,9 @@
 { pkgs, unstablePkgs }:
 let
   packages = with pkgs; [
-    octaveFull
+    # octaveFull
     unstablePkgs.texliveFull
+    xclip
+    alsa-utils
   ];
 in packages

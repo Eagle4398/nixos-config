@@ -1,14 +1,16 @@
 # home.nix
 { config, pkgs, lib, unstablePkgs, username, hostname, ... }:
 {
-  imports = [ ./home-config.nix ];
+  imports = [ 
+  ./home-config.nix 
+  ];
   _module.args = {
     username = username;
     hostname = hostname;
   };
 
   fonts.fontconfig.enable = true;
-  home.packages = [ pkgs.nerd-fonts.caskaydia-cove pkgs.home-manager ];
+  home.packages = [ pkgs.nerd-fonts.caskaydia-cove (lib.hiPrio pkgs.home-manager)];
 
   # Set the state version. Use the version you FIRST start managing
   # your config with Home Manager. Update this value cautiously,

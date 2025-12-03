@@ -1,9 +1,7 @@
 { pkgs, unstablePkgs }:
 let
   packages = with pkgs; [
-    gparted
     unstablePkgs.yt-dlp
-    qdirstat
     xorg.xhost
     qimgv
     # litarvan-theme
@@ -19,8 +17,9 @@ let
     numlockx
     kbd
     #
-    clang
+    (lib.hiPrio clang)
     nodejs
+    xidlehook
     shfmt
     unstablePkgs.neovim
     vim
@@ -29,12 +28,11 @@ let
     curl
     zip
     unzip
-    xclip
+    # xclip
     spice
     spice-vdagent
     jq
     openssh
-    unstablePkgs.bitwarden
     fzf
     uv
     python3
@@ -49,5 +47,6 @@ let
     acpi
     ripgrep
     brightnessctl
+    e2fsprogs
   ];
 in packages

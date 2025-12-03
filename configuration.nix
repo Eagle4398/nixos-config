@@ -1,31 +1,28 @@
 { config, lib, pkgs, username, unstablePkgs, ... }:
 let
- userPackages = import ./userPackages.nix { inherit pkgs unstablePkgs; };
- envPackages = import ./envPackages.nix { inherit pkgs unstablePkgs; };
- bigPackages = import ./bigPackages.nix { inherit pkgs unstablePkgs; };
+ userPackages = import ./common/userPackages.nix { inherit pkgs unstablePkgs; };
+ envPackages = import ./common/envPackages.nix { inherit pkgs unstablePkgs; };
+ nixOSPackages = import ./common/nixOSPackages.nix { inherit pkgs unstablePkgs; };
+ guiPackages = import ./common/guiPackages.nix { inherit pkgs unstablePkgs; };
 in {
   imports = [
-    # # Used to keep it at system level, but don't want impure flakes 
-    # /etc/nixos/hardware-configuration.nix
-
-    # # necessary without flake import
-    # (import "${home-manager}/nixos")
+  ./common/substituters.nix
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes " ];
 
   # Caches for fast downloads
   # Pretty sure that cache.nixos is not necessary to do explicitly
-  nix.settings.substituters = [
-    "https://cache.nixos.org/"
-    "https://cuda-maintainers.cachix.org"
-    "https://nix-community.cachix.org"
-  ];
-  nix.settings.trusted-public-keys = [
-    "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
-    "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
-    "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-  ];
+  # nix.settings.substituters = [
+  #   "https://cache.nixos.org/"
+  #   "https://cuda-maintainers.cachix.org"
+  #   "https://nix-community.cachix.org"
+  # ];
+  # nix.settings.trusted-public-keys = [
+  #   "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+  #   "cuda-maintainers.cachix.org-1:0dq3bujKpuEPMCX6U4WylrUDZ9JyUG0VpVZa7CNfq5E="
+  #   "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+  # ];
 
   # Windows drives
   boot.supportedFilesystems = [ "ntfs" ];
@@ -73,7 +70,11 @@ in {
       xss-lock
     ];
   };
-  programs.xss-lock = { enable = true; };
+  
+  # programs.i3lock.enable = true;
+  # security.pam.services.i3lock.enable = true;
+  # security.pam.services.xidlehook.enable = true;
+  # programs.xss-lock = { enable = true; };
   services.xserver.xkb = {
     layout = "us,de";
     variant = "dvorak,";
@@ -122,12 +123,13 @@ in {
   users.users.${username} = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" "audio" ];
-    packages =  userPackages ++ bigPackages;
+    packages =  userPackages ++ nixOSPackages ++ guiPackages;
   };
 
   # why not
   programs.firefox.enable = true;
 
+  # programs.i3lock.enable = true;
   # java
   programs.java = {
     enable = true;
@@ -258,7 +260,7 @@ in {
     zlib
   ];
 
-  nixpkgs.config.allowUnfree = true;
+  # nixpkgs.config.allowUnfree = true;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
   # and is used to maintain compatibility with application data (e.g. databases) created on older NixOS versions.
