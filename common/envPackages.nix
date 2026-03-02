@@ -13,6 +13,9 @@ let
     kdePackages.gwenview
     kdePackages.qtsvg
     kdePackages.ark
+    kdePackages.kservice # Provides kbuildsycoca6
+    kdePackages.kio # File handling framework
+    # kdePackages.plasma-workspace
     libsForQt5.breeze-icons
     numlockx
     kbd
@@ -48,5 +51,25 @@ let
     ripgrep
     brightnessctl
     e2fsprogs
+
+    seahorse
+    libsecret
+
+    libnvidia-container
+
+    fd
+    bandwhich
+
+    distrobox
+
+    # kdePackages.kio-gdrive
+    # kdePackages.kaccounts-integration
+    # kdePackages.kaccounts-providers
+    # kdePackages.kcmutils
+    # kdePackages.systemsettings # Required to actually sign into your Google account
+    # # If you don't have a keyring/wallet, tokens won't save
+    # kdePackages.signond
+    # kdePackages.kwallet
+    # kdePackages.kwallet-pam
   ];
 in packages

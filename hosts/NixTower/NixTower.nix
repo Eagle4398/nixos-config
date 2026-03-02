@@ -1,52 +1,21 @@
 { config, lib, pkgs, ... }:
 let
-  nature-backgrounds = pkgs.stdenvNoCC.mkDerivation {
-    name = "nature-images";
-    src = pkgs.fetchurl {
-      url =
-        "https://www.dropbox.com/scl/fi/t6gnddx3lgrov56nj30de/nature-images.zip?rlkey=0t2jo103z63udj6emaiewgsth&st=y3poqskl&dl=1";
-      sha256 = "sha256-XF3pPcVRE84wnesxO8aDFpsL81NK2YBWfnDr6ge2+SY=";
-    };
-    nativeBuildInputs = [ pkgs.unzip ];
-    dontUnpack = true;
-    buildPhase = ''
-      unzip $src
-    '';
-    installPhase = ''
-      mkdir -p $out
-      cp -r * $out/
-    '';
-  };
-  litarvan-theme = pkgs.callPackage
-    (pkgs.fetchFromGitHub
-      {
-        owner = "Eagle4398";
-        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
-        rev = "6b4c0b0e96d39d02a689b35af986194933e4459d";
-        sha256 = "sha256-y8PsEKDQeF+jAKFPZGdzrrzoUJXqonYQA7RV5CYKD8w=";
-      } + /litarvan-theme.nix)
-    { };
-  sea-greeter = pkgs.callPackage
-    (pkgs.fetchFromGitHub
-      {
-        owner = "Eagle4398";
-        repo = "sea-greeter-lightdm-webkit-theme-litarvan-nixpkg";
-        rev = "ce435d6a3103c269275b7f0e2754dd94c2d3378b";
-        sha256 = "sha256-2JKyHtkz7VMw7WYVdOO91z9QNzi0iVowF7fsuzFlqDc=";
-      } + /sea-greeter.nix)
-    {
-      theme = litarvan-theme;
-      backgrounds = nature-backgrounds;
-    };
-in
-{
-    nix.settings.http2 = false;
+  # greeter = pkgs.callPackage (/home/gloo/projects/lightdm-webkit-greeter-nixpkg/default.nix) { inherit pkgs; };
+  greeter = pkgs.callPackage (pkgs.fetchFromGitHub {
+    owner = "Eagle4398";
+    repo = "lightdm-webkit-greeter-litarvan-zaynchen";
+    rev = "9eb440e3dc526160d606cfa13902a6e0eb5987ab";
+    hash = "sha256-Y4ano8FXqzD6j4y0goyFzEkPQtgkqqrD0V2Kic/dXFA=";
+  } + /default.nix) { inherit pkgs; };
+in {
+  nix.settings.http2 = false;
 
-  services.xserver.displayManager.lightdm = {
-    enable = true;
-    greeter.name = "sea-greeter";
-    greeter.package = sea-greeter;
-  };
+  # services.xserver.displayManager.lightdm = {
+  #   enable = true;
+  #   # greeter.name = "sea-greeter";
+  #   greeter.name = greeter.pname;
+  #   greeter.package = greeter.xgreeters;
+  # };
 
   # Tower Setup
   boot.loader.grub.enable = true;
@@ -77,52 +46,45 @@ in
 
   networking.hostName = "NixTower";
 
-  hardware.graphics = { enable = true; };
-
+  hardware.graphics.enable = true;
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
-    modesetting.enable = true;
-
-    powerManagement.enable = false;
-
-    powerManagement.finegrained = false;
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
 
     open = true;
 
+    modesetting.enable = true;
     nvidiaSettings = true;
-
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    powerManagement.enable = false;
   };
 
-  services.xserver = {
-    # autoConfig = false;
-
-    # Monitor configuration
-    monitorSection = ''
-      Option "DP-2" "DisplayPort-2"
-      Option "PreferredMode" "2560x1440_143.86"
-    '';
-
-    # Screen configuration (NVIDIA-specific)
-    screenSection = ''
-      Option "metamodes" "DP-2: 2560x1440_143.86 +0+0"
-      Option "AllowIndirectGLXProtocol" "off"
-      Option "TripleBuffer" "on"
-    '';
-
-    # Device configuration for NVIDIA
-    deviceSection = ''
-      Driver "nvidia"
-      Option "HardDPMS" "true"
-    '';
-
-    # Fallback: Run xrandr command at login
-    # displayManager.setupCommands = ''
-    #   ${pkgs.xorg.xrandr}/bin/xrandr --output DP-2 --mode 2560x1440 --rate 143.86
-    # '';
+  services.picom = {
+    enable = true;
+    backend = "glx"; # Often smoother than the default "xrender"
+    # vSync = true;
   };
 
+  # # attempts to make kde google drive work without plasma but XD!
+  # services.gnome.gnome-keyring.enable = true;
+  # security.pam.services.lightdm.enableGnomeKeyring = true;
+  #
+  # environment.sessionVariables = {
+  #   # Tells Qt where to look for QML modules (like kaccounts)
+  #   QML2_IMPORT_PATH = [
+  #     "${pkgs.kdePackages.kaccounts-integration}/lib/qt-6/qml"
+  #     "${pkgs.kdePackages.kaccounts-providers}/lib/qt-6/qml"
+  #     "${pkgs.kdePackages.kcmutils}/lib/qt-6/qml"
+  #   ];
+  #
+  #   # Tells KDE where to find the actual binary plugins (.so files)
+  #   QT_PLUGIN_PATH = [
+  #     "${pkgs.kdePackages.kaccounts-integration}/lib/qt-6/plugins"
+  #     "${pkgs.kdePackages.kaccounts-providers}/lib/qt-6/plugins"
+  #
+  #   ];
+  #   SIGNON_PLUGIN_PATH = "${pkgs.kdePackages.signond}/lib/signon";
+  # };
   # VirtualBox Setup
   # services.xserver.videoDrivers = lib.mkForce [ "vmware" "virtualbox" "modesetting" ];
   #

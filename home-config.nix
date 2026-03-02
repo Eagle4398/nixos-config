@@ -1,70 +1,30 @@
 # home-config.nix
-{ config, pkgs, lib, ... }@args:
+{
+  config,
+  pkgs,
+  lib,
+  ...
+}@args:
 let
-  username =
-    if args ? "username" then args.username else import ./common/username.nix;
+  pins = import ./common/pkgPin.nix;
+  inherit (pins) pkgSrc;
 
-  hostname = lib.strings.trim (if args ? "hostname" then
-    args.hostname
-  else if (builtins.getEnv "HOSTNAME") != "" then
-    builtins.getEnv "HOSTNAME"
-  else
-    builtins.readFile "/etc/hostname");
+  username = if args ? "username" then args.username else import ./common/username.nix;
 
-  # Nix Enthusiasts will hang me for this but I want my config to be cross-
-  # distro compatible. Therefore I have exported my environment variables
-  # and paths that I use on other platforms to files which I parse here to be 
-  # able to use them in Nix.
-  readLinesFromFile = path:
-    let
-      raw = builtins.readFile path;
-      lines = lib.strings.splitString "\n" raw;
-      filteredLines = lib.lists.filter (line:
-        let trimmed = lib.strings.trim line;
-        in trimmed != "" && !(lib.strings.hasPrefix "#" trimmed)) lines;
-    in lib.lists.map (line: lib.strings.trim line) filteredLines;
-
-  # This is for parsing "export SSH_AUTH_SOCK=..." etc
-  regex =
-    "^[[:space:]]*(export[[:space:]]+)?([a-zA-Z_][a-zA-Z0-9_]*)[[:space:]]*=[[:space:]]*(.*)$";
-  parseKeyValueLines = lines:
-    lib.lists.foldl' (acc: line:
-      let match = builtins.match regex line;
-      in if match == null then
-        acc
-      else
-        let
-          name = lib.lists.elemAt match 1; # Was 0
-          rawValue = lib.lists.elemAt match 2; # Was 1
-          value = lib.strings.replaceStrings [ "$HOME" ]
-            [ "${config.home.homeDirectory}" ] rawValue;
-        in if lib.hasAttr name acc then
-          abort "Duplicate variable name found in exports file: ${name}"
-        else
-          acc // { "${name}" = value; }) { } lines;
-
-  # Locations in Submodule dotfiles 
-  pathToPathsFile = ./dotfiles/stowignore/path.txt;
-  pathToExportsFile = ./dotfiles/stowignore/exports.txt;
-
-  # Resolving $HOME and $BASHRC to nix in paths
-  pathLines = readLinesFromFile pathToPathsFile;
-  pathsToAdd = lib.lists.map (path:
-    lib.strings.replaceStrings [ "$HOME" "$BASHRC" ] [
-      "${config.home.homeDirectory}"
-      "${toString ./dotfiles}"
-    ] path) pathLines;
-
-  exportLines = readLinesFromFile pathToExportsFile;
-  exportAttributes = parseKeyValueLines exportLines;
-
+  hostname = lib.strings.trim (
+    if args ? "hostname" then
+      args.hostname
+    else if (builtins.getEnv "HOSTNAME") != "" then
+      builtins.getEnv "HOSTNAME"
+    else
+      builtins.readFile "/etc/hostname"
+  );
+  exportAttributes = { };
+  pathsToAdd = [ ];
   primaryPath = ./hosts/${hostname}/home-${hostname}.nix;
-in {
-  # imports = []
-  # ++(if builtins.pathExists primaryPath then
-  #     [ primaryPath ]
-  #       else
-  #     [ ]);
+in
+{
+  imports = [ ] ++ (if builtins.pathExists primaryPath then [ primaryPath ] else [ ]);
   home.username = username;
   home.homeDirectory = "/home/${username}";
 
@@ -75,32 +35,63 @@ in {
 
   programs.home-manager.enable = true;
 
-  # # On Other Linux Systems I would resolve $DOTFILES using a truepath wrapper,
-  # # that I statically link (mainly because of non-interactive shells) but that is
-  # # not necessary on Nix, because it appears that that "non-interactive" like tmux new-shell
-  # # still inherits $DOTFILES on nix
   home.sessionVariables = exportAttributes // {
     DOTFILES = "${toString ./dotfiles}";
+    NIX_PATH = "nixpkgs=${pkgSrc}";
+    LIBSQLITE = "${pkgs.sqlite.out}/lib/libsqlite3.so";
+    _JAVA_OPTIONS = "-Dawt.useSystemAAFontSettings=lcd";
+    SSH_AUTH_SOCK = "${config.home.homeDirectory}/.bitwarden-ssh-agent.sock";
+    # XDG_MENU_PREFIX = "plasma-";
   };
-  home.sessionPath = pathsToAdd;
+
+  home.sessionPath = pathsToAdd ++ [
+    "${config.home.homeDirectory}/.local/bin"
+    "${config.home.homeDirectory}/.local/bin/scripts"
+    "${toString ./dotfiles}/.local/bin/scripts"
+  ];
 
   programs.bash = {
     enable = true;
-    shellAliases = { la = "ls -A"; };
+    shellAliases = {
+      la = "ls -A";
+      # vim = "nvim -c \"Telescope find_files\"";
+    };
     bashrcExtra = ''
+      # if secret-tool lookup application ghcr &>/dev/null; then
+      #   # export CR_PAT="$(secret-tool lookup application ghcr)"
+      #   # echo $(secret-tool lookup application ghcr) | podman login ghcr.io -u eagle4398 --password-stdin
+      # fi
+
       # Auto-start tmux if shell is interactive, not already in tmux, and not in screen
-      if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && [[ "$TERM" != "screen" ]]; then
-        exec tmux
+      if [[ $- == *i* ]] && [[ -z "$TMUX" ]] && [[ "$TERM" != "screen" ]] && [[ -z "$container" ]] && [[ ! -f "/.dockerenv" ]]; then
+        exec ${pkgs.tmux}/bin/tmux 
       fi
+
+      export EDITOR=$(which nvim)
       export SUDO_EDITOR=$(which nvim)
-      export VISUAL=$(which nvim)i
+      export VISUAL=$(which nvim)
     '';
+  };
+
+  xdg.configFile."menus/applications.menu".source = pkgs.fetchurl {
+    url = "https://raw.githubusercontent.com/KDE/plasma-workspace/master/menu/desktop/plasma-applications.menu";
+    hash = "sha256-pVvOXRPvpsnhmGEAldOKpOuGJXo2cNSIQidecm5wK/Y=";
   };
 
   home.file = {
     ".config/alacritty/alacritty-host.toml" = {
       source = ./dotfiles/.config/alacritty/alacritty-${hostname}.toml;
     };
+    ".config/alacritty/alacritty.toml" = {
+      source = ./dotfiles/.config/alacritty/alacritty.toml;
+    };
+    ".config/alacritty/alacritty-common.toml" = {
+      source = ./dotfiles/.config/alacritty/alacritty-common.toml;
+    };
+    # ".config/alacritty" = {
+    #   source = ./dotfiles/.config/alacritty;
+    #   recursive = true;
+    # };
     ".screenlayout" = {
       source = config.lib.file.mkOutOfStoreSymlink ./dotfiles/.screenlayout;
     };
@@ -118,10 +109,6 @@ in {
       source = ./dotfiles/.config/i3;
       recursive = true;
     };
-    ".config/alacritty" = {
-      source = ./dotfiles/.config/alacritty;
-      recursive = true;
-    };
     ".local/bin/dotfilelaunch" = {
       source = ./dotfiles/.local/bin/dotfilelaunch;
     };
@@ -135,8 +122,16 @@ in {
       source = ./dotfiles/.config/i3blocks;
       recursive = true;
     };
-    ".tmux.conf" = { source = ./dotfiles/.tmux.conf; };
-    ".wallpaper.jpg" = { source = ./dotfiles/.wallpaper.jpg; };
+    ".tmux.conf" = {
+      source = ./dotfiles/.tmux.conf;
+    };
+    "wallpaper.jpg" = {
+      source = config.lib.file.mkOutOfStoreSymlink ./dotfiles/stowignore/wallpaper.jpg;
+    };
+    ".local/share/bash-completion/completions" = {
+      source = ./dotfiles/.local/share/bash-completion/completions;
+      recursive = true;
+    };
   };
 
   xdg.userDirs = {
@@ -145,4 +140,3 @@ in {
   };
 
 }
-

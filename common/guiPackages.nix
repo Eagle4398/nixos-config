@@ -22,6 +22,10 @@ let
     pinta
     unstablePkgs.obsidian
     alacritty
-    qbittorrent
+    # qbittorrent
+    unstablePkgs.whatsapp-electron
+    handbrake
+    unstablePkgs.antigravity
+    sioyek
   ];
 in packages

@@ -1,22 +1,12 @@
-{ config, pkgs, lib, ... }:
+{ config, lib, pkgs, unstablePkgs, nixGL, hostname, ... }:
 let
-  pins = import ./common/pkgPin.nix;
-  inherit (pins) unstablePkgs pkgPin;
-  pkgs = pkgPin;
-
-  nixGL = import (builtins.fetchTarball {
-    url = "https://github.com/nix-community/nixGL/archive/master.tar.gz";
-    sha256 = "1zv3bshk0l4hfh1s7s3jzwjxl0nqqcvc4a3kydd3d4lgh7651d3x";
-  }) { inherit pkgs; };
-
-  nixGLWrap = pkg:
-    pkgs.buildEnv {
-      name = "nixGL-${pkg.name}";
-      paths = [ pkg ] ++ (map (bin:
-        pkgs.hiPrio (pkgs.writeShellScriptBin bin ''
-          exec ${nixGL.auto.nixGLDefault}/bin/nixGL ${pkg}/bin/${bin} "$@"
-        '')) (builtins.attrNames (builtins.readDir "${pkg}/bin")));
-    };
+  # convert tlp nix settings to tlp file
+  myTlpSettings = import ./modules/core/tlp-settings.nix;
+  toTlpConfig = attrs:
+    lib.concatStringsSep "\n" (lib.mapAttrsToList
+      (k: v: "${k}=${if builtins.isString v then ''"${v}"'' else toString v}")
+      attrs);
+  tlpConfigFile = pkgs.writeText "tlp.conf" (toTlpConfig myTlpSettings);
 
   userPackages =
     import ./common/userPackages.nix { inherit pkgs unstablePkgs; };
@@ -24,26 +14,30 @@ let
     import ./common/hmStandalonePackages.nix { inherit pkgs unstablePkgs; };
   envPackages = import ./common/envPackages.nix { inherit pkgs unstablePkgs; };
   guiPackages = import ./common/guiPackages.nix { inherit pkgs unstablePkgs; };
-in {
-  imports = [ ./home.nix ];
-  _module.args = { unstablePkgs = unstablePkgs; };
 
-  home.packages = userPackages ++ envPackages ++ hmStandalonePackages
-    ++ [ nixGL.auto.nixGLDefault ] ++ (map nixGLWrap guiPackages);
-  # ++ [ nixGL.auto.nixGLDefault ] ++ (map config.lib.nixGL.wrap guiPackages);
-  # # ^ is supposed to work but doesn't.
+in {
+  imports = [ ./home.nix ./modules/home/packages.nix ];
+  _module.args = {
+    # inherit nixGL;
+    # inherit unstablePkgs nixGL hostname;
+    # pkgs = lib.mkForce pkgs;
+  };
+
+  home.file.".config/tlp/generated-tlp.conf".text = toTlpConfig myTlpSettings;
+
+  home_custom.packages = {
+    standalone = true;
+    core = userPackages ++ envPackages ++ hmStandalonePackages ++ [
+      (pkgs.writeShellScriptBin "install-tlp-conf" ''
+        echo "Installing TLP config to /etc/tlp.conf (requires sudo)..."
+        sudo cp ~/.config/tlp/generated-tlp.conf /etc/tlp.conf
+        sudo systemctl restart tlp
+        echo "Done."
+      '')
+    ];
+    gui = guiPackages;
+  };
 
   home.file = { ".xsessionrc" = { source = ./dotfiles/.xsessionrc; }; };
-
-  # home.sessionVariables = {
-  #   ALSA_PLUGIN_DIRS = "${pkgs.alsa-plugins}/lib/alsa-lib";
-  # };
-
-  # nix.package = pkgs.nix;
-  # # not necessary with manual package pin 
-  # nixpkgs.config = {
-  #   allowUnfree = true;
-  #   allowUnfreePredicate = (_: true);
-  # };
 
 }

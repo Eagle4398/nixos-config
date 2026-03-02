@@ -14,5 +14,10 @@ let
     arandr
     autorandr
     cachix
+    nix-serve-ng
+    rclone
+    ffmpeg
+    nixd
+    rustfmt
   ];
 in packages

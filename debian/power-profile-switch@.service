@@ -1,0 +1,10 @@
+[Unit]
+Description=Switch power profiles based on power supply status (%i)
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/bash @SCRIPT_PATH@ %i
+
+[Install]
+WantedBy=multi-user.target

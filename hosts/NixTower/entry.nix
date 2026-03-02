@@ -1,10 +1,9 @@
-# entry.nix
-{ config, lib, pkgs, ... }:
-let
+{ ... }:
+let 
   hostname = "NixTower";
-in
-{
-  imports = [
-     (import ../../nixos.nix { inherit hostname config lib pkgs; })
+in {
+  imports = [ 
+    # Pass hostname explicitly as a function argument
+    (import ../../nixos-imports.nix { inherit hostname; }) 
   ];
 }
